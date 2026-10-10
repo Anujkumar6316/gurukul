@@ -30,65 +30,6 @@ class NLUResult(BaseModel):
     explanation: str | None = None
 
 
-# Multilingual corpus of natural conversational utterances
-AFFIRMATIONS = [
-    # English
-    "yes", "yeah", "yep", "yup", "sure", "sure thing", "ok", "okay", "fine", "tell me",
-    "please tell me", "explain", "tell me more", "go ahead", "yes please", "why",
-    "why not", "i want to know", "tell", "yes tell me", "definitely", "absolutely",
-    "certainly", "proceed", "continue", "yes please tell me", "tell me about it",
-    "i would love to know", "tell about it", "yes do tell", "yes i want to know",
-    "would love to know", "tell me why", "tell me how", "tell me when",
-    # Marathi
-    "हो", "होय", "सांगा", "हो सांगा", "नक्कीच", "नक्की सांगा", "मला जाणून घ्यायचे आहे",
-    "हो नक्की", "सांगा ना", "सांग", "सांग मला", "का बरं", "कधी", "का", "सांगा पाहू",
-    "हो मला सांगा", "बोल", "सांगा की", "होय सांगा", "हो मला जाणून घ्यायला आवडेल",
-    "नक्की", "सांग ना", "हो ना", "नक्की सांगा ना", "हो माहिती द्या", "माहिती सांगा",
-    # Hindi
-    "हाँ", "हाँजी", "हां", "बताओ", "बताइए", "हाँ बताओ", "ज़रूर", "जरूर बताओ",
-    "मुझे जानना है", "हाँ बताइए", "क्यों", "बोलो", "हाँ बोलो", "बताओ ना", "ज़रूर बताइए",
-    "हाँ मुझे जानना है", "बताइए ना", "ज़रूर", "हाँ जी", "बताओ भाई", "हाँ जरूर",
-    "जानकारी दीजिए", "मुझे बताइए", "हाँ बिल्कुल", "बिल्कुल", "जरूर",
-    # Romanized / Hinglish / MarEnglish
-    "ha", "haan", "batao", "bataiye", "ho sanga", "sanga", "sanga na", "batao na",
-    "yes bolo", "batao bhai", "plz tell", "tell karo", "yes plz", "yess", "haanji",
-    "ha bolo", "ho bol", "bata", "zaroor", "nakki sanga", "ho sang", "yes sir"
-]
-
-NEGATIONS = [
-    # English
-    "no", "nope", "nah", "no thanks", "not now", "not interested", "skip", "later",
-    "i do not want to know", "dont tell me", "stop", "never", "cancel", "not really",
-    "no need", "leave it", "pass", "no thank you", "dont want to know", "skip this",
-    # Marathi
-    "नाही", "नको", "नको सांगा", "राहू द्या", "मला नको", "नको रे", "नंतर",
-    "आता नको", "काही नको", "नको मला जाणून घ्यायला", "नको मला", "नाही नको",
-    "नंतर सांगा", "नका सांगू", "काही गरज नाही",
-    # Hindi
-    "नहीं", "मत बताओ", "नहीं जानना", "रहने दो", "ना", "नहीं चाहिए", "बाद में",
-    "अभी नहीं", "मत बोलो", "रहने दीजिए", "मुझे नहीं जानना", "छोड़ो", "नहीं धन्यवाद",
-    "बाद में बताना", "मत बताइए",
-    # Romanized
-    "nako", "nahi", "nahi chahiye", "rahne do", "not now", "nako re", "mat batao",
-    "nahin", "nako mala", "later", "nako sanga", "chodo", "skip karo", "rehne do"
-]
-
-CURRICULUM_QUERIES = [
-    # English
-    "what is photosynthesis", "who was shivaji maharaj", "speed of light",
-    "what is gravity", "define habitat", "components of air", "solar system",
-    "how do plants make food", "what is living thing", "sound speed in air",
-    # Marathi
-    "प्रकाशसंश्लेषण म्हणजे काय", "शिवाजी महाराज कोण होते", "प्रकाशाचा वेग",
-    "अधिवास म्हणजे काय", "गुरुत्वाकर्षण म्हणजे काय", "हवेचे घटक कोणते",
-    "सजीव आणि निर्जीव", "स्वराज्याची राजधानी कोणती", "पाण्याचे गुणधर्म",
-    # Hindi
-    "भारत का राष्ट्रगान", "पेड़ पौधे भोजन कैसे बनाते हैं", "प्रकाश क्या है",
-    "आवास किसे कहते हैं", "गुरुत्वाकर्षण क्या है", "हवा के घटक",
-    "सजीव और निर्जीव", "प्रकाश की चाल", "ध्वनि की चाल"
-]
-
-
 class StatisticalFollowUpIntentClassifier:
     """Statistical character/subword n-gram intent classifier.
 
@@ -119,11 +60,34 @@ class StatisticalFollowUpIntentClassifier:
         self._train_and_cache()
 
     def _train_and_cache(self) -> None:
-        X = AFFIRMATIONS + NEGATIONS + CURRICULUM_QUERIES
+        import json
+
+        # Load versioned dialogue training asset
+        corpus_path: Path | None = None
+        for c in [
+            Path(__file__).resolve().parent / "data" / "dialogue_acts_train.json",
+            Path(__file__).resolve().parents[1] / "data" / "dialogue_acts_train.json",
+            Path.cwd() / "data" / "dialogue_acts_train.json",
+        ]:
+            if c.exists():
+                corpus_path = c
+                break
+
+        if not corpus_path:
+            raise FileNotFoundError("Dialogue acts training asset 'dialogue_acts_train.json' not found.")
+
+        with open(corpus_path, "r", encoding="utf-8") as f:
+            d_data = json.load(f)
+
+        aff = d_data.get("affirmations", [])
+        neg = d_data.get("negations", [])
+        curr = d_data.get("curriculum_queries", [])
+
+        X = aff + neg + curr
         y = (
-            ["affirm"] * len(AFFIRMATIONS)
-            + ["deny"] * len(NEGATIONS)
-            + ["other"] * len(CURRICULUM_QUERIES)
+            ["affirm"] * len(aff)
+            + ["deny"] * len(neg)
+            + ["other"] * len(curr)
         )
 
         pipeline = Pipeline([
@@ -173,6 +137,25 @@ ORDINAL_MAP: dict[str, int] = {
 }
 
 
+def extract_ordinal(query: str) -> int | None:
+    """Extracts ordinal chip selection index (0-based) from an utterance."""
+    cleaned = clean_text(query).lower()
+    if cleaned in ORDINAL_MAP:
+        return ORDINAL_MAP[cleaned]
+
+    words = cleaned.split()
+    for w in words:
+        if w in ORDINAL_MAP:
+            return ORDINAL_MAP[w]
+
+    for i in range(len(words) - 1):
+        bigram = f"{words[i]} {words[i+1]}"
+        if bigram in ORDINAL_MAP:
+            return ORDINAL_MAP[bigram]
+
+    return None
+
+
 class ConversationalFollowUpNLU:
     """Conversational Follow-Up Natural Language Understanding Engine.
 
@@ -202,20 +185,17 @@ class ConversationalFollowUpNLU:
         if not session or (not session.last_offered_card_id and not session.last_chips):
             return NLUResult(intent=FollowUpIntent.NEW_QUERY, confidence=1.0)
 
-        lower_query = cleaned_query.lower()
-
-        # 1. Direct Ordinal / Chip Number Selection
-        if lower_query in ORDINAL_MAP:
-            idx = ORDINAL_MAP[lower_query]
-            if 0 <= idx < len(session.last_chips):
-                chip = session.last_chips[idx]
-                return NLUResult(
-                    intent=FollowUpIntent.SELECT_OPTION,
-                    target_card_id=chip.card_id,
-                    target_chip=chip,
-                    confidence=1.0,
-                    explanation=f"Selected chip #{idx + 1} by ordinal identifier",
-                )
+        # 1. Direct Ordinal / Chip Number Selection (whole string or extracted token)
+        ord_idx = extract_ordinal(cleaned_query)
+        if ord_idx is not None and 0 <= ord_idx < len(session.last_chips):
+            chip = session.last_chips[ord_idx]
+            return NLUResult(
+                intent=FollowUpIntent.SELECT_OPTION,
+                target_card_id=chip.card_id,
+                target_chip=chip,
+                confidence=1.0,
+                explanation=f"Selected chip #{ord_idx + 1} by ordinal identifier",
+            )
 
         # 2. Statistical Intent Classification (Affirmation vs Negation)
         intent_class, prob = self.classifier.predict(cleaned_query)

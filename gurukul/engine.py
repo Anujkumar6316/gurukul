@@ -17,6 +17,7 @@ from gurukul.models import (
     OfflineQueryLog,
 )
 from gurukul.nlu import ConversationalFollowUpNLU
+from gurukul.nlu_aspects import QueryAspect, classify_query
 from gurukul.normalizer import infer_preferred_language
 
 
@@ -28,7 +29,7 @@ class OfflineFactBot:
     BM25 lexical anchoring, RapidFuzz reranking, and statistical NLU for multi-turn dialogue.
     """
 
-    CONFIDENCE_THRESHOLD = 0.50
+    CONFIDENCE_THRESHOLD = 0.68
 
     REFUSAL_MESSAGES = {
         "mr": "माफ करा, हा प्रश्न सध्याच्या उपलब्ध ज्ञान कार्ड्समध्ये उपलब्ध नाही. तुम्ही इतर विषयांवर प्रश्न विचारू शकता.",
@@ -60,7 +61,7 @@ class OfflineFactBot:
         data_path: Path | str | None = None,
         cache_dir: Path | str | None = None,
         model_name: str | None = None,
-        confidence_threshold: float = 0.50,
+        confidence_threshold: float = CONFIDENCE_THRESHOLD,
     ) -> None:
         self.confidence_threshold = confidence_threshold
         self.index = FactCardIndex(
@@ -241,16 +242,38 @@ class OfflineFactBot:
             effective_lang = inferred_lang
             session.language = effective_lang
 
-        # Standard neural semantic search
-        results = self.index.search(query=query, grade=effective_grade, top_k=3)
+        # Classify query aspect and modality with zero-shot prototype support
+        analysis = classify_query(query, encoder=self.index.encoder)
+
+        # Standard neural semantic search with aspect and modality guidance
+        results = self.index.search(
+            query=query,
+            grade=effective_grade,
+            top_k=3,
+            aspect=analysis.aspect.value,
+            modality=analysis.modality.value,
+        )
 
         if results and results[0][1] >= self.confidence_threshold:
             top_card, score = results[0]
-            answer = top_card.get_answer(effective_lang)
+            raw_answer = top_card.get_answer(effective_lang)
+
+            # Domain-agnostic honesty bridge if student asked for causes but card only has other aspects
+            if analysis.aspect == QueryAspect.CAUSE and top_card.get_aspect() != "cause":
+                if effective_lang == "mr":
+                    answer = f"या विषयाची थेट कारणे उपलब्ध नसून, संबंधित माहिती पुढीलप्रमाणे आहे:\n\n{raw_answer}"
+                elif effective_lang == "hi":
+                    answer = f"इस विषय के सीधे कारण उपलब्ध नहीं हैं, परंतु संबंधित जानकारी निम्नलिखित है:\n\n{raw_answer}"
+                else:
+                    answer = f"Direct causes are not listed for this topic; however, the related information is as follows:\n\n{raw_answer}"
+            else:
+                answer = raw_answer
+
             citation = top_card.source.citation_str() if top_card.source else None
 
+            pref_aspect = "cause" if (analysis.aspect == QueryAspect.CAUSE and top_card.get_aspect() != "cause") else None
             offer_prompt, natural_q, featured_id = self.index.get_random_follow_up_offer(
-                top_card.id, lang=effective_lang
+                top_card.id, lang=effective_lang, preferred_aspect=pref_aspect
             )
             chips = self.index.get_follow_up_chips(
                 top_card.id, lang=effective_lang, max_chips=4, featured_id=featured_id

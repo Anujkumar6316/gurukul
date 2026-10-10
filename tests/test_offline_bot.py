@@ -42,7 +42,7 @@ class TestFactCardIndex(unittest.TestCase):
         cls.index = FactCardIndex()
 
     def test_index_size(self):
-        self.assertEqual(len(self.index.cards_by_id), 952)
+        self.assertGreaterEqual(len(self.index.cards_by_id), 952)
         self.assertIsNotNone(self.index.vectors)
         self.assertGreater(len(self.index.indexed_card_ids), 3000)
 
@@ -481,6 +481,45 @@ class TestStudioUI(unittest.TestCase):
             self.assertGreaterEqual(ratio, 0.0)
             self.assertLessEqual(ratio, 1.0)
             self.assertTrue(isinstance(desc, str))
+
+    def test_nlu_aspect_classification(self):
+        from gurukul.nlu_aspects import QueryAspect, QueryModality, classify_query
+
+        c_res = classify_query("अभ्यासात एकाग्रता कमी होण्याची कारणे कोणती?")
+        self.assertEqual(c_res.aspect, QueryAspect.CAUSE)
+        self.assertEqual(c_res.modality, QueryModality.GENERAL)
+
+        r_res = classify_query("ऑनलाइन शिकताना लक्ष कसे केंद्रित करावे?")
+        self.assertEqual(r_res.aspect, QueryAspect.REMEDY)
+        self.assertEqual(r_res.modality, QueryModality.ONLINE)
+
+        rd_res = classify_query("पुस्तक वाचताना लक्ष कसे केंद्रित करावे?")
+        self.assertEqual(rd_res.modality, QueryModality.READING)
+
+        ls_res = classify_query("सलग अभ्यास करताना लक्ष कसे टिकवावे?")
+        self.assertEqual(ls_res.modality, QueryModality.LONG_SESSION)
+
+    def test_all_cards_devanagari_purity(self):
+        from gurukul.normalizer import detect_script
+
+        cards = list(self.bot.index.cards_by_id.values())
+        self.assertGreaterEqual(len(cards), 957)
+        for c in cards:
+            q_mr = c.get_offer_question("mr")
+            self.assertEqual(detect_script(q_mr), "devanagari", f"MR non-devanagari for {c.id}: {q_mr}")
+            q_hi = c.get_offer_question("hi")
+            self.assertEqual(detect_script(q_hi), "devanagari", f"HI non-devanagari for {c.id}: {q_hi}")
+
+    def test_study_specialized_card_routing(self):
+        # Cause query
+        resp_cause = self.bot.resolve_query("अभ्यासात एकाग्रता कमी होण्याची कारणे कोणती?", lang="mr")
+        self.assertEqual(resp_cause.card_id, "kb_study_causes_of_distraction")
+        self.assertIn("अपुरी झोप", resp_cause.answer)
+
+        # Online study query
+        resp_online = self.bot.resolve_query("ऑनलाइन शिकताना लक्ष कसे केंद्रित करावे?", lang="mr")
+        self.assertEqual(resp_online.card_id, "kb_study_online_learning_focus")
+        self.assertIn("नोटिफिकेशन्स", resp_online.answer)
 
 
 if __name__ == "__main__":

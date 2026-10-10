@@ -104,18 +104,23 @@ def get_deepeval_metrics(judge_model: str | None = None) -> list[Any]:
     abstention_accuracy = GEval(
         name="Abstention Accuracy",
         criteria=(
-            "Verify that the system appropriately and politely abstains when asked an out-of-syllabus query "
-            "or non-academic query (e.g., cooking recipes, stock prices, celebrity gossip, current politics), "
-            "and conversely that it does NOT falsely abstain on valid academic topics. "
+            "Verify that the system appropriately and politely abstains when asked an out-of-scope query "
+            "(e.g., cooking recipes, stock market prices, celebrity gossip, current politics), "
+            "and conversely that it provides answers when the topic is part of the educational knowledge base "
+            "(academic curriculum subjects, study methodology, concentration skills, exam guidance). "
             "When abstaining, the message must be courteous, constructive, and explain that the topic is outside "
-            "the current fact cards."
+            "the current knowledge base."
         ),
-        evaluation_params=[LLMTestCaseParams.INPUT, LLMTestCaseParams.ACTUAL_OUTPUT],
+        evaluation_params=[
+            LLMTestCaseParams.INPUT,
+            LLMTestCaseParams.ACTUAL_OUTPUT,
+            LLMTestCaseParams.RETRIEVAL_CONTEXT,
+        ],
         evaluation_steps=[
-            "Determine if the query belongs to the school curriculum or is an out-of-syllabus question.",
-            "If out-of-syllabus: verify that actual output refuses politely rather than hallucinating an answer.",
-            "If in-syllabus: verify that actual output provides the factual answer rather than falsely refusing.",
-            "Assign 1.0 for correct behavior and 0.0 for hallucinations on out-of-syllabus queries or false refusals.",
+            "Determine if the query is covered by the educational knowledge base (academic curriculum, study skills, concentration, exam habits) or is an out-of-scope query (e.g., cooking recipes, stock market prices, celebrity gossip, sports scores).",
+            "If out-of-scope: verify that actual output refuses politely rather than hallucinating an answer.",
+            "If in-scope: verify that actual output provides the factual answer supported by context rather than falsely refusing.",
+            "Assign 1.0 for correct behavior and 0.0 for hallucinations on out-of-scope queries or false refusals.",
         ],
         model=active_judge,
         threshold=settings.abstention_accuracy_threshold,

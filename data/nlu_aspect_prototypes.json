@@ -1,0 +1,95 @@
+{
+  "aspects": {
+    "cause": [
+      "causes and reasons why does this happen",
+      "what leads to lack of concentration and focus",
+      "why does the mind wander during study",
+      "एकाग्रता कमी होण्याची कारणे काय आहेत",
+      "अभ्यासात लक्ष न लागण्याचे कारण काय असू शकते",
+      "मन का विचलित होते का भटकते",
+      "कशापायी कशामुळे लक्ष लागत नाही",
+      "पढ़ाई में ध्यान भटकने के मुख्य कारण क्या हैं",
+      "मन क्यों भटकता है वजह क्या है किस कारण से",
+      "padhai me dhyan na lagne ka reason kya hai",
+      "concentration kyu kam hota hai causes kya hai"
+    ],
+    "remedy": [
+      "solutions remedies techniques methods tips how to improve",
+      "how to focus and increase concentration practical ways",
+      "how to stop mind from wandering and stay disciplined",
+      "अभ्यासात लक्ष कसे केंद्रित करावे उपाय सांगा",
+      "एकाग्रता कशी वाढवावी मन स्थिर कसे ठेवावे",
+      "मन भटकणे कसे थांबवावे काय करावे युक्त्या नियम",
+      "अभ्यासात मन स्थिर कसे ठेवावे",
+      "अभ्यासात लक्ष वारंवार विचलित होत असेल तर काय करावे",
+      "पढ़ाई करते समय ध्यान कैसे केंद्रित करें एकाग्रता कैसे बढ़ाएं",
+      "मन भटकने से कैसे रोकें क्या उपाय करें तरीके सुझाव",
+      "padhai me focus kaise badhaye solutions kya hai",
+      "concentration badhane ke tips aur remedies batao"
+    ],
+    "definition": [
+      "what is the definition and meaning of concept",
+      "define what does this term mean",
+      "म्हणजे काय याची व्याख्या काय आहे संकल्पना अर्थ",
+      "परिभाषा क्या है किसे कहते हैं अर्थ क्या है तात्पर्य",
+      "ka matlab kya hai definition kya hoti hai"
+    ],
+    "symptom": [
+      "symptoms signs indicators how to recognize identification",
+      "लक्षणे कसे ओळखावे खूण संकेत ओळख",
+      "लक्षण कैसे पहचानें संकेत पहचान",
+      "symptoms kya hote hai kaise pehchane"
+    ],
+    "schedule": [
+      "timetable schedule routine time management daily study plan",
+      "अभ्यासाचे वेळापत्रक कसे बनवायचे नियोजन नित्यक्रम वेळेचे व्यवस्थापन",
+      "समय सारणी टाइम टेबल दिनचर्या समय प्रबंधन",
+      "time table kaise banaye daily study schedule"
+    ],
+    "general": [
+      "general factual textbook questions who what when where",
+      "who was chhatrapati shivaji maharaj speed of light science history",
+      "छत्रपती शिवाजी महाराज कोण होते प्रकाशाचा वेग झाडे अन्न कसे बनवतात",
+      "छत्रपति शिवाजी महाराज कौन थे प्रकाश की चाल सौरमंडल",
+      "history science geography facts curriculum"
+    ]
+  },
+  "modalities": {
+    "online": [
+      "online learning screen digital mobile laptop zoom video internet classes",
+      "ऑनलाइन शिकताना मोबाईल लॅपटॉप स्क्रीन डिजिटल झूम इंटरनेट",
+      "ऑनलाइन शिकताना लक्ष कसे केंद्रित करावे",
+      "ऑनलाइन पढ़ाई करते समय मोबाइल लैपटॉप स्क्रीन डिजिटल वीडियो",
+      "online classes screen time mobile study"
+    ],
+    "reading": [
+      "reading books textbook chapter study reading passage text",
+      "पुस्तक वाचताना लक्ष कसे केंद्रित करावे वाचन धडा पुस्तके वाचनात लक्ष",
+      "किताब या पाठ पढ़ते समय ध्यान कैसे लगाएं पुस्तक पाठ रीडिंग",
+      "book reading chapters textbook study"
+    ],
+    "exam": [
+      "exam preparation test revision papers examination scoring",
+      "परीक्षेचा अभ्यास करताना एकाग्रता कशी वाढवावी उजळणी पेपर परीक्षा टेस्ट",
+      "परीक्षा की तैयारी करते समय टेस्ट रिवीजन इम्तिहान",
+      "exam prep test paper revision"
+    ],
+    "long_session": [
+      "continuous long study hours pomodoro session pacing breaks",
+      "सलग अभ्यास करताना लक्ष कसे टिकवावे तासनतास पोमोडोरो खूप वेळ अभ्यास",
+      "लगातार पढ़ाई करते समय ध्यान कैसे बनाए रखें लंबे समय तक अध्ययन पोमोडोरो",
+      "long study hours continuous sessions pomodoro"
+    ],
+    "general": [
+      "general study concentration focus discipline learning",
+      "अभ्यासात लक्ष केंद्रित करणे एकाग्रता वाढवणे",
+      "अभ्यासात एकाग्रता कमी होण्याची कारणे कोणती",
+      "अभ्यासात मन भटकणे थांबवणे अभ्यास करणे",
+      "पढ़ाई करते समय ध्यान केंद्रित करना एकाग्रता बढ़ाना",
+      "पढ़ाई में मन लगाना सामान्य पढ़ाई अध्ययन",
+      "general study without specific format or setting",
+      "सामान्य अभ्यास",
+      "सामान्य पढ़ाई"
+    ]
+  }
+}

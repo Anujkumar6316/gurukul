@@ -39,7 +39,25 @@ class FactCard(BaseModel):
     answer_templates: dict[str, str] = Field(default_factory=dict)
     source: FactSource | None = None
     follow_up_cards: list[str] = Field(default_factory=list)
+    offer_questions: dict[str, str] = Field(default_factory=dict)
+    aspect: str | None = None
+    modality: str | None = None
+    is_curriculum: bool = True
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    def get_aspect(self) -> str:
+        if self.aspect:
+            return self.aspect
+        if self.metadata and "aspect" in self.metadata:
+            return str(self.metadata["aspect"])
+        return "general"
+
+    def get_modality(self) -> str:
+        if self.modality:
+            return self.modality
+        if self.metadata and "modality" in self.metadata:
+            return str(self.metadata["modality"])
+        return "general"
 
     @model_validator(mode="before")
     @classmethod
@@ -78,6 +96,25 @@ class FactCard(BaseModel):
                 lang = "mr" if script == "devanagari" else "en"
                 d["answer_templates"] = {lang: ans_val}
 
+        # 4. Populate languages if missing
+        if not d.get("languages") and d.get("answer_templates"):
+            d["languages"] = list(d["answer_templates"].keys())
+
+        # 5. Determine is_curriculum explicitly at ingestion
+        if "is_curriculum" not in d:
+            if d.get("metadata", {}).get("is_curriculum") is not None:
+                d["is_curriculum"] = bool(d["metadata"]["is_curriculum"])
+            else:
+                book_id = str(d.get("source", {}).get("book_id", "") if d.get("source") else "")
+                if book_id in ("custom_knowledgebase", "user_ingested") or book_id.startswith("knowledgebase"):
+                    d["is_curriculum"] = False
+                elif str(d.get("id", "")).startswith("kb_") and book_id != "curriculum_knowledgebase":
+                    d["is_curriculum"] = False
+                elif not d.get("source") and d.get("id") and not str(d.get("id")).startswith("concept_"):
+                    d["is_curriculum"] = False
+                else:
+                    d["is_curriculum"] = True
+
         return d
 
     def get_answer(self, lang: str = "mr") -> str:
@@ -92,140 +129,38 @@ class FactCard(BaseModel):
         return ""
 
     def get_offer_question(self, lang: str = "mr") -> str:
-        """Generates a natural 'Would you like to know...' style offer question for this card."""
+        """Generates a natural offer question for this card."""
+        if self.offer_questions and lang in self.offer_questions:
+            return self.offer_questions[lang]
+
         from gurukul.normalizer import detect_script, infer_preferred_language
 
         aliases = self.question_aliases or []
+        target_script = "devanagari" if lang in ("mr", "hi") else "latin"
+
+        matching = [
+            a.strip("?|।॥ ").strip()
+            for a in aliases
+            if detect_script(a) == target_script and infer_preferred_language(a, default=lang) == lang
+        ]
+        if not matching:
+            matching = [a.strip("?|।॥ ").strip() for a in aliases if detect_script(a) == target_script]
+
+        raw = matching[0] if matching else (self.topic or self.id).replace("_", " ")
 
         if lang == "en":
-            cands = [
-                a.strip("?|।॥ ").strip()
-                for a in aliases
-                if detect_script(a) == "latin" and infer_preferred_language(a, default="en") == "en"
-            ]
-            raw = cands[0] if cands else (self.topic or self.id).replace("_", " ")
             raw_l = raw.lower()
-
-            # Sanitize leading imperative/question prefixes if present
-            for prefix in ("tell me about ", "tell me ", "explain ", "describe "):
-                if raw_l.startswith(prefix):
-                    raw = raw[len(prefix):].strip()
-                    raw_l = raw.lower()
-                    break
-
-            if " vs " in raw_l:
-                parts = raw.split(" vs ")
-                return f"Would you like to know the difference between {parts[0].strip()} and {parts[1].strip()}?"
-            elif raw_l.startswith("difference between "):
-                return f"Would you like to know the {raw_l}?"
-            elif "where was " in raw_l and " born" in raw_l:
-                subj = raw_l.replace("where was ", "").replace(" born", "").strip()
-                return f"Would you like to know where {subj.title()} was born?"
-            elif raw_l.startswith("where was "):
-                subj = raw_l.replace("where was ", "").strip()
-                return f"Would you like to know where {subj.title()} was?"
-            elif raw_l.startswith(("who was ", "who is ")):
-                prefix = "who was " if raw_l.startswith("who was ") else "who is "
-                person = raw[len(prefix):].strip()
-                return f"Would you like to know who {person.title()} was?"
-            elif raw_l.startswith("who wrote "):
-                work = raw[len("who wrote "):].strip()
-                return f"Would you like to know who wrote {work.title()}?"
-            elif raw_l.startswith("why did "):
-                rest = raw[len("why did "):].strip()
-                return f"Would you like to know why {rest}?"
-            elif raw_l.startswith("when was "):
-                rest = raw[len("when was "):].strip()
-                return f"Would you like to know when {rest}?"
-            elif raw_l.startswith(("how do ", "how does ")):
-                prefix = "how do " if raw_l.startswith("how do ") else "how does "
-                rest = raw[len(prefix):].strip()
-                return f"Would you like to know how {rest}?"
-            elif raw_l.startswith("what is a "):
-                term = raw[len("what is a "):].strip()
-                return f"Would you like to know what a {term} is?"
-            elif raw_l.startswith("what is an "):
-                term = raw[len("what is an "):].strip()
-                return f"Would you like to know what an {term} is?"
-            elif raw_l.startswith("what is the "):
-                term = raw[len("what is the "):].strip()
-                return f"Would you like to know what the {term} is?"
-            elif raw_l.startswith("what was the "):
-                term = raw[len("what was the "):].strip()
-                return f"Would you like to know what the {term} was?"
-            elif raw_l.startswith("what is "):
-                term = raw[len("what is "):].strip()
-                return f"Would you like to know what {term} is?"
-            elif raw_l.startswith("what was "):
-                term = raw[len("what was "):].strip()
-                return f"Would you like to know what {term} was?"
-            elif raw_l.startswith("what are the "):
-                term = raw[len("what are the "):].strip()
-                return f"Would you like to know what the {term} are?"
-            elif raw_l.startswith("what were the "):
-                term = raw[len("what were the "):].strip()
-                return f"Would you like to know what the {term} were?"
-            elif raw_l.startswith("what are "):
-                term = raw[len("what are "):].strip()
-                return f"Would you like to know what {term} are?"
-            elif raw_l.startswith("what were "):
-                term = raw[len("what were "):].strip()
-                return f"Would you like to know what {term} were?"
-            elif raw_l.startswith(("speed of ", "rate of ")):
-                return f"Would you like to know the {raw_l}?"
-            else:
-                clean_name = raw.strip()
-                if clean_name.lower().startswith(("what ", "which ", "who ", "where ", "when ", "why ", "how ")):
-                    return f"Would you like to know {clean_name}?"
-                return f"Would you like to know more about {clean_name}?"
-
+            if any(raw_l.startswith(w + " ") for w in ["what", "which", "who", "where", "when", "why", "how"]):
+                return f"Would you like to know {raw}?"
+            return f"Would you like to know more about {raw}?"
         elif lang == "hi":
-            hi_cands = [a.strip("?|।॥ ").strip() for a in aliases if infer_preferred_language(a, default="mr") == "hi"]
-            if not hi_cands:
-                hi_cands = [a.strip("?|।॥ ").strip() for a in aliases if detect_script(a) == "devanagari"]
-            raw = hi_cands[0] if hi_cands else (self.topic or self.id).replace("_", " ")
-
-            for p in ["मुझे बताइए कि ", "बताइए कि ", "बताओ कि ", "बताइए ", "बताओ "]:
-                if raw.startswith(p):
-                    raw = raw[len(p):].strip()
-                    break
-
-            if "अंतर" in raw:
-                return f"क्या आप {raw} जानना चाहेंगे?"
-            elif "किसे कहते हैं" in raw:
-                term = raw.replace("किसे कहते हैं", "").strip()
-                return f"क्या आप जानना चाहेंगे कि {term} किसे कहते हैं?"
-            elif "क्या है" in raw:
-                term = raw.replace("क्या है", "").strip()
-                return f"क्या आप जानना चाहेंगे कि {term} क्या है?"
-            elif any(qw in raw for qw in ["कहाँ", "कब", "कैसे", "किसने", "कौन", "कितना"]):
+            if any(w in raw for w in ["कहाँ", "कब", "कैसे", "किसने", "कौन", "कितना", "क्या"]):
                 return f"क्या आप जानना चाहेंगे कि {raw}?"
-            else:
-                return f"क्या आप {raw} के बारे में जानना चाहेंगे?"
-
+            return f"क्या आप {raw} के बारे में अधिक जानना चाहेंगे?"
         else:  # mr
-            mr_cands = [a.strip("?|।॥ ").strip() for a in aliases if infer_preferred_language(a, default="mr") == "mr"]
-            if not mr_cands:
-                mr_cands = [a.strip("?|।॥ ").strip() for a in aliases if detect_script(a) == "devanagari"]
-            raw = mr_cands[0] if mr_cands else (self.topic or self.id).replace("_", " ")
-
-            for p in ["मला सांगा ", "सांगा की ", "सांगा ", "माहिती सांगा "]:
-                if raw.startswith(p):
-                    raw = raw[len(p):].strip()
-                    break
-
-            if "फरक" in raw:
-                return f"{raw} जाणून घ्यायला आवडेल का?"
-            elif "म्हणजे काय" in raw:
-                term = raw.replace("म्हणजे काय", "").strip()
-                return f"{term} म्हणजे काय, हे जाणून घ्यायला आवडेल का?"
-            elif any(qw in raw for qw in ["कधी", "कुठे", "कोठे", "कोणी", "कसे", "किती", "कोण", "कोणती", "कोणता"]):
+            if any(w in raw for w in ["कधी", "कुठे", "कोठे", "कोणी", "कसे", "किती", "कोण", "कोणती", "कोणता", "काय", "का"]):
                 return f"{raw}, हे तुम्हाला जाणून घ्यायला आवडेल का?"
-            elif "काय आहे" in raw:
-                term = raw.replace("काय आहे", "").strip()
-                return f"{term} काय आहे, हे जाणून घ्यायला आवडेल का?"
-            else:
-                return f"{raw} याविषयी अधिक जाणून घ्यायला आवडेल का?"
+            return f"{raw} याविषयी अधिक जाणून घ्यायला आवडेल का?"
 
     def get_title(self, lang: str = "mr") -> str:
         """Return a natural offer question title for the card."""

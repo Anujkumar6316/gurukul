@@ -631,7 +631,6 @@
       "kb_d91bac3d",
       "person_shivaji_maharaj",
       "shivaji_maharaj_birthplace",
-      "kb_0fd9691f",
       "kb_26cc30b4"
     ]
   },
@@ -995,11 +994,12 @@
     },
     "follow_up_cards": [
       "kb_a985263e",
-      "kb_08863531",
+      "kb_study_causes_of_distraction",
       "kb_74f2ef48",
-      "kb_b1352809",
-      "kb_f2314305"
-    ]
+      "kb_08863531"
+    ],
+    "aspect": "remedy",
+    "modality": "general"
   },
   {
     "id": "kb_f2314305",
@@ -1081,7 +1081,9 @@
       "kb_a985263e",
       "kb_b1352809",
       "kb_d9295ecc"
-    ]
+    ],
+    "aspect": "schedule",
+    "modality": "general"
   },
   {
     "id": "kb_08863531",
@@ -1122,7 +1124,9 @@
       "kb_a985263e",
       "kb_b1352809",
       "kb_f2314305"
-    ]
+    ],
+    "aspect": "remedy",
+    "modality": "reading"
   },
   {
     "id": "kb_a985263e",
@@ -1147,7 +1151,15 @@
       "how to improve concentration in study",
       "अभ्यासात लक्ष कसे लागेल",
       "फोकस कसा वाढवायचा",
-      "अभ्यास करताना मन भटकणे कसे थांबवायचे"
+      "अभ्यास करताना मन भटकणे कसे थांबवायचे",
+      "अभ्यासात लक्ष कसे केंद्रित करावे",
+      "अभ्यासात एकाग्रता कशी वाढवावी",
+      "अभ्यासात लक्ष कसे टिकवावे",
+      "अभ्यासात मन एकाग्र कसे ठेवावे",
+      "अभ्यासात लक्ष लागण्यासाठी काय करावे",
+      "अभ्यासात मन स्थिर कसे ठेवावे",
+      "अभ्यासात लक्ष वाढवण्याचा सोपा मार्ग कोणता",
+      "अभ्यासात एकाग्रतेसाठी कोणता सराव करावा"
     ],
     "entities": [],
     "answer_templates": {
@@ -1159,12 +1171,14 @@
       "page": "study_tips"
     },
     "follow_up_cards": [
-      "kb_d8c1a223",
-      "kb_08863531",
+      "kb_study_causes_of_distraction",
+      "kb_study_online_learning_focus",
+      "kb_study_mind_wandering_control",
       "kb_74f2ef48",
-      "kb_b1352809",
-      "kb_d9295ecc"
-    ]
+      "kb_d8c1a223"
+    ],
+    "aspect": "remedy",
+    "modality": "general"
   },
   {
     "id": "kb_d845bcc4",
@@ -2696,7 +2710,9 @@
       "kb_08863531",
       "kb_f2314305",
       "kb_74f2ef48"
-    ]
+    ],
+    "aspect": "remedy",
+    "modality": "exam"
   },
   {
     "id": "kb_3e670f69",
@@ -38121,5 +38137,305 @@
       "page": "maths"
     },
     "follow_up_cards": []
+  },
+  {
+    "id": "kb_study_causes_of_distraction",
+    "topic": "अभ्यासात लक्ष विचलित होण्याची कारणे",
+    "category": "study_tips",
+    "subject": "general",
+    "grades": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "aspect": "cause",
+    "modality": "general",
+    "question_aliases": [
+      "अभ्यासात एकाग्रता कमी होण्याची कारणे कोणती",
+      "अभ्यासात लक्ष न लागण्याचे कारण काय असू शकते",
+      "अभ्यासात लक्ष का विचलित होते",
+      "अभ्यासात मन का लागत नाही",
+      "लक्ष विचलित होण्याची कारणे कोणती",
+      "एकाग्रता भंग होण्याची कारणे",
+      "पढ़ाई में मन न लगने का क्या कारण है",
+      "पढ़ाई में ध्यान भटकने के कारण",
+      "causes of lack of concentration in study",
+      "reasons for distraction while studying"
+    ],
+    "entities": [
+      "अभ्यास",
+      "एकाग्रता",
+      "कारणे",
+      "distraction causes"
+    ],
+    "answer_templates": {
+      "mr": "अभ्यासात लक्ष विचलित होण्याची मुख्य कारणे पुढीलप्रमाणे आहेत: १. अपुरी झोप आणि मानसिक थकवा. २. मोबाईलवरील नोटिफिकेशन्स आणि सोशल मीडियाचे व्यत्यय. ३. अभ्यासाचे निश्चित वेळापत्रक किंवा ध्येय नसणे. ४. मनात येणारे इतर अनावश्यक विचार आणि चिंता. ५. अस्वच्छ, गोंधळाचे किंवा अयोग्य प्रकाश असलेले वातावरण.",
+      "hi": "पढ़ाई में ध्यान भटकने के मुख्य कारण निम्नलिखित हैं: १. पर्याप्त नींद की कमी और मानसिक थकान। २. मोबाइल पर आने वाले नोटिफिकेशन्स और सोशल मीडिया का भटकाव। ३. निश्चित टाइम-टेबल या स्पष्ट लक्ष्य का अभाव। ४. मन में चलने वाली अनावश्यक चिंताएं और विचार। ५. शांत और सुव्यवस्थित वातावरण की कमी।",
+      "en": "The primary causes of distraction while studying include: 1. Lack of adequate sleep and mental exhaustion. 2. Digital interruptions from mobile notifications and social media apps. 3. Absence of a structured study schedule or clear daily goals. 4. Wandering thoughts, emotional stress, and worries. 5. A noisy, cluttered, or poorly lit study environment."
+    },
+    "source": {
+      "book_id": "curriculum_knowledgebase",
+      "page": "study_skills_causes"
+    },
+    "follow_up_cards": [
+      "kb_a985263e",
+      "kb_study_online_learning_focus",
+      "kb_study_mind_wandering_control",
+      "kb_74f2ef48"
+    ]
+  },
+  {
+    "id": "kb_study_online_learning_focus",
+    "topic": "ऑनलाइन शिकताना एकाग्रता टिकवण्याचे उपाय",
+    "category": "study_tips",
+    "subject": "general",
+    "grades": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "aspect": "remedy",
+    "modality": "online",
+    "question_aliases": [
+      "ऑनलाइन शिकताना लक्ष कसे केंद्रित करावे",
+      "ऑनलाइन शिकताना मन एकाग्र कसे ठेवावे",
+      "ऑनलाइन शिकताना एकाग्रता कशी वाढवावी",
+      "ऑनलाइन शिकताना लक्ष कसे टिकवावे",
+      "ऑनलाइन शिकताना लक्ष विचलित होऊ नये यासाठी काय करावे",
+      "ऑनलाइन क्लास करताना लक्ष कसे द्यावे",
+      "ऑनलाइन लेक्चर मध्ये मन कसे लावावे",
+      "ऑनलाइन पढ़ाई में ध्यान कैसे लगाएं",
+      "ऑनलाइन क्लास में एकाग्रता कैसे बनाए रखें",
+      "how to focus during online classes",
+      "how to concentrate while studying online"
+    ],
+    "entities": [
+      "ऑनलाइन अभ्यास",
+      "स्क्रीन",
+      "online study",
+      "digital learning"
+    ],
+    "answer_templates": {
+      "mr": "ऑनलाइन किंवा स्क्रीनवर शिकताना लक्ष केंद्रित करण्यासाठी हे उपाय करा: १. अभ्यासाच्या वेळी सोशल मीडिया आणि इतर ॲप्सचे नोटिफिकेशन्स पूर्णपणे बंद ठेवा. २. ब्राऊझरवर फक्त अभ्यासाशी संबंधित टॅब उघडी ठेवा. ३. बेडवर झोपून न शिकता खुर्ची आणि टेबलवर ताठ बसून शिका. ४. डोळ्यांवरील ताण कमी करण्यासाठी दर २० मिनिटांनी २० सेकंद दूर पाहा (20-20-20 नियम). ५. क्लास चालू असताना मुख्य मुद्दे वहीमध्ये लिहून घेण्याची सक्रिय सवय ठेवा.",
+      "hi": "ऑनलाइन या स्क्रीन पर पढ़ाई करते समय ध्यान केंद्रित रखने के उपाय: १. पढ़ाई के समय सोशल मीडिया और अन्य ॲप्स के नोटिफिकेशन्स बंद रखें। २. ब्राउज़र पर केवल पढ़ाई से जुड़े टैब ही खुले रखें। ३. बिस्तर पर लेटकर पढ़ने के बजाय मेज-कुर्सी पर सीधे बैठकर पढ़ें। ४. आंखों के आराम के लिए हर २० मिनट बाद २० सेकंड दूर देखें। ५. क्लास के दौरान जरूरी बिंदुओं को कॉपी में हाथ से नोट करते रहें।",
+      "en": "Techniques to maintain focus during online classes: 1. Turn off notifications from social media and gaming apps before starting. 2. Keep only learning-related tabs open in the web browser. 3. Sit upright at a desk instead of lounging on a bed. 4. Follow the 20-20-20 rule to reduce screen eye strain (look 20 feet away for 20 seconds every 20 minutes). 5. Actively take notes with pen and paper during lectures."
+    },
+    "source": {
+      "book_id": "curriculum_knowledgebase",
+      "page": "online_learning_focus"
+    },
+    "follow_up_cards": [
+      "kb_a985263e",
+      "kb_study_causes_of_distraction",
+      "kb_study_mind_wandering_control",
+      "kb_study_long_sessions_pomodoro"
+    ]
+  },
+  {
+    "id": "kb_study_mind_wandering_control",
+    "topic": "अभ्यासात मन आणि विचार भटकणे थांबवण्याचे उपाय",
+    "category": "study_tips",
+    "subject": "general",
+    "grades": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "aspect": "remedy",
+    "modality": "general",
+    "question_aliases": [
+      "अभ्यासात मन भटकणे कसे थांबवावे",
+      "अभ्यासात विचार भटकत असतील तर काय करावे",
+      "अभ्यासात मन दुसरीकडे जात असेल तर काय करावे",
+      "अभ्यासात विचारांवर नियंत्रण कसे ठेवावे",
+      "अभ्यासात लक्ष विचलित करणारे विचार कसे हाताळावेत",
+      "अभ्यासात मनातील अनावश्यक विचार कसे कमी करावेत",
+      "अभ्यासात मन भरकटत असेल तर कसे सावरावे",
+      "पढ़ाई में भटकते मन को कैसे रोकें",
+      "पढ़ाई करते समय दिमाग में गलत विचार आने पर क्या करें",
+      "how to stop mind wandering while studying",
+      "how to control distracting thoughts during study"
+    ],
+    "entities": [
+      "मन भटकणे",
+      "विचार नियंत्रण",
+      "mind wandering",
+      "thought control"
+    ],
+    "answer_templates": {
+      "mr": "अभ्यास करताना मनात इतर विचार येत असल्यास हे तंत्र वापरा: १. विचार भटकू लागताच १ मिनिट डोळे मिटून दीर्घ श्वास घ्या आणि मन शांत करा. २. अभ्यासाच्या टेबलावर एक कोरा कागद ठेवा; कोणताही अनावश्यक विचार आला तर तो कागदावर लिहून ठेवा आणि अभ्यासानंतर त्यावर विचार करण्याचे ठरवा. ३. ५-सेकंद नियम वापरा: मन भटकल्याचे जाणवताच लगेच पुस्तकावर लक्ष वळवा. ४. मोठ्याने वाचून किंवा लिहून अभ्यास करा, ज्यामुळे मन भरकटत नाही.",
+      "hi": "पढ़ाई के दौरान मन और विचार भटकने पर ये उपाय अपनाएं: १. जब भी ध्यान भटके, एक मिनट के लिए आंखें बंद करके गहरी सांस लें। २. पास में एक खाली कागज रखें; कोई भी अनावश्यक विचार आए तो उसे लिख लें ताकि दिमाग से बोझ हट जाए और पढ़ाई के बाद उस पर सोचें। ३. जोर से बोलकर या लिखकर पढ़ें, इससे एकाग्रता बनी रहती है। ४. पढ़ाई के छोटे-छोटे लक्ष्य तय करें ताकि मन को भटकने का समय न मिले।",
+      "en": "How to stop mind wandering and intrusive thoughts while studying: 1. Take a 60-second deep breathing pause whenever your focus drifts to calm your mind. 2. Keep a distraction pad next to your notebook; write down any distracting thoughts to deal with later, clearing your mind immediately. 3. Read aloud or write notes to actively engage speech and motor senses. 4. Break study sessions into small, achievable micro-goals."
+    },
+    "source": {
+      "book_id": "curriculum_knowledgebase",
+      "page": "mind_wandering_control"
+    },
+    "follow_up_cards": [
+      "kb_a985263e",
+      "kb_study_causes_of_distraction",
+      "kb_study_reading_focus",
+      "kb_d8c1a223"
+    ]
+  },
+  {
+    "id": "kb_study_reading_focus",
+    "topic": "पुस्तक वाचताना लक्ष केंद्रित करण्याचे उपाय",
+    "category": "study_tips",
+    "subject": "general",
+    "grades": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "aspect": "remedy",
+    "modality": "reading",
+    "question_aliases": [
+      "पुस्तक वाचताना लक्ष कसे केंद्रित करावे",
+      "धडा शिकताना लक्ष कसे केंद्रित करावे",
+      "अभ्यासात लक्षपूर्वक कसे वाचावे",
+      "वाचन करताना एकाग्रता कशी टिकवावी",
+      "पुस्तक वाचताना मन कसे एकाग्र करावे",
+      "किताब पढ़ते समय ध्यान कैसे लगाएं",
+      "पाठ पढ़ते समय एकाग्रता कैसे बनाए रखें",
+      "how to concentrate while reading books",
+      "how to stay focused while reading textbook"
+    ],
+    "entities": [
+      "वाचन",
+      "पुस्तक",
+      "धडा",
+      "reading focus",
+      "textbook"
+    ],
+    "answer_templates": {
+      "mr": "पुस्तक किंवा धडा वाचताना लक्ष टिकवण्यासाठी खालील पद्धती वापरा: १. सक्रिय वाचन (Active Reading): हातात पेन्सिल किंवा हायलाइटर ठेवा आणि महत्त्वाच्या ओळी अधोरेखित करा. २. SQ3R पद्धत वापरा: आधी पाठाचे शीर्षक व उपशीर्षके पाहून घ्या, स्वतःला प्रश्न विचारा, मग वाचन करा. ३. प्रत्येक परिच्छेद वाचल्यानंतर तो स्वतःच्या भाषेत २ वाक्यांत सारांश सांगा. ४. सलग न वाचता दर २५ मिनिटांच्या वाचनानंतर २ मिनिटे डोळ्यांना विश्रांती द्या.",
+      "hi": "किताब या पाठ पढ़ते समय एकाग्रता बनाए रखने के तरीके: १. एक्टिव रीडिंग: हाथ में पेंसिल रखें और मुख्य वाक्यों को रेखांकित करते हुए पढ़ें। २. हर पैराग्राफ पढ़ने के बाद उसका मुख्य सारांश अपने शब्दों में याद करें। ३. पाठ के मुख्य शीर्षकों को समझकर खुद से सवाल पूछें और फिर जवाब खोजें। ४. लगातार पढ़ने के बजाय २५ मिनट बाद २ मिनट का छोटा विराम लें।",
+      "en": "Techniques to maintain focus while reading textbooks: 1. Practice Active Reading by holding a pencil or highlighter and marking key ideas. 2. Use the SQ3R method (Survey, Question, Read, Recite, Review) to keep comprehension active. 3. Summarize each section in your own words after finishing it. 4. Take short micro-breaks every 25 minutes to refresh your eyes and mental processing."
+    },
+    "source": {
+      "book_id": "curriculum_knowledgebase",
+      "page": "reading_comprehension_focus"
+    },
+    "follow_up_cards": [
+      "kb_08863531",
+      "kb_a985263e",
+      "kb_b1352809",
+      "kb_study_mind_wandering_control"
+    ]
+  },
+  {
+    "id": "kb_study_long_sessions_pomodoro",
+    "topic": "सलग अभ्यास करताना एकाग्रता टिकवण्याचे उपाय",
+    "category": "study_tips",
+    "subject": "general",
+    "grades": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "languages": [
+      "mr",
+      "hi",
+      "en"
+    ],
+    "aspect": "remedy",
+    "modality": "long_session",
+    "question_aliases": [
+      "सलग अभ्यास करताना लक्ष कसे टिकवावे",
+      "सलग अभ्यास करताना मन एकाग्र कसे ठेवावे",
+      "जास्त वेळ अभ्यास करताना थकवा कसा टाळावा",
+      "लांब वेळ अभ्यास कसा करावा",
+      "लगातार पढ़ाई करते समय एकाग्रता कैसे बनाए रखें",
+      "लंबे समय तक पढ़ाई में ध्यान कैसे लगाएं",
+      "how to concentrate during long continuous study sessions",
+      "pomodoro technique for study concentration"
+    ],
+    "entities": [
+      "सलग अभ्यास",
+      "पोमोडोरो",
+      "continuous study",
+      "pomodoro"
+    ],
+    "answer_templates": {
+      "mr": "सलग अनेक तास अभ्यास करताना एकाग्रता टिकवण्यासाठी हे तंत्र अवलंबा: १. पोमोडोरो तंत्र (Pomodoro Technique): २५ मिनिटे सलग मन लावून अभ्यास करा आणि त्यानंतर ५ मिनिटे छोटा ब्रेक घ्या. २. ब्रेकच्या वेळी मोबाईल न पाहता पाणी प्या, थोडे चाला किंवा डोळ्यांना विश्रांती द्या. ३. दर २ तासांनंतर विषयांमध्ये बदल करा, जेणेकरून कंटाळा येत नाही. ४. हायड्रेटेड राहा आणि अभ्यासाच्या ठिकाणी हवा व पुरेसा प्रकाश ठेवा.",
+      "hi": "लगातार लंबे समय तक पढ़ाई के दौरान एकाग्रता बनाए रखने के उपाय: १. पोमोडोरो तकनीक अपनाएं: २५ मिनट पढ़ाई करें और उसके बाद ५ मिनट का ब्रेक लें। २. ब्रेक में स्क्रीन देखने के बजाय पानी पिएं और थोड़ा टहलें। ३. हर दो घंटे बाद विषय बदलें ताकि बोरियत न हो। ४. पर्याप्त पानी पिएं और अध्ययन कक्ष में उचित रोशनी व ताजी हवा रखें।",
+      "en": "How to maintain peak focus during long continuous study sessions: 1. Adopt the Pomodoro technique: study with full immersion for 25 minutes followed by a strict 5-minute break. 2. During breaks, step away from screens, drink water, and do light stretching. 3. Switch subjects every 2 hours to prevent mental fatigue. 4. Stay hydrated and ensure your study room has good ventilation and lighting."
+    },
+    "source": {
+      "book_id": "curriculum_knowledgebase",
+      "page": "pomodoro_continuous_study"
+    },
+    "follow_up_cards": [
+      "kb_74f2ef48",
+      "kb_a985263e",
+      "kb_study_online_learning_focus",
+      "kb_d9295ecc"
+    ]
   }
 ]

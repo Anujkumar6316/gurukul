@@ -58,7 +58,12 @@ def detect_script(text: str) -> str:
         elif 0x0041 <= cp <= 0x005A or 0x0061 <= cp <= 0x007A:
             latin_count += 1
 
-    if devanagari_count > 0:
+    total_indicative = devanagari_count + latin_count
+    if total_indicative == 0:
+        return "devanagari" if devanagari_count > 0 else "latin"
+
+    # Robust majority threshold: at least 40% of alphabet characters must be Devanagari
+    if devanagari_count / total_indicative >= 0.40:
         return "devanagari"
     return "latin"
 
@@ -80,9 +85,9 @@ class StatisticalLanguageIdentifier:
         if cache_path:
             self.cache_path = Path(cache_path)
         else:
-            pkg_cache = Path(__file__).resolve().parent / "data" / ".cache" / "lang_detector_v3.pkl"
-            repo_cache = Path(__file__).resolve().parents[1] / "data" / ".cache" / "lang_detector_v3.pkl"
-            cwd_cache = Path.cwd() / "data" / ".cache" / "lang_detector_v3.pkl"
+            pkg_cache = Path(__file__).resolve().parent / "data" / ".cache" / "lang_detector_v4.pkl"
+            repo_cache = Path(__file__).resolve().parents[1] / "data" / ".cache" / "lang_detector_v4.pkl"
+            cwd_cache = Path.cwd() / "data" / ".cache" / "lang_detector_v4.pkl"
             if pkg_cache.exists():
                 self.cache_path = pkg_cache
             elif repo_cache.exists():
@@ -114,108 +119,35 @@ class StatisticalLanguageIdentifier:
             except Exception:
                 pass
 
-        # Try to locate fact_cards.json to train if needed
-        data_file = self.cache_path.parent.parent / "fact_cards.json"
-        if not data_file.exists():
-            repo_data = Path(__file__).resolve().parents[1] / "data" / "fact_cards.json"
-            if repo_data.exists():
-                data_file = repo_data
-            else:
-                return
+        # Try to locate external language corpora asset
+        corpora_file = self.cache_path.parent.parent / "language_corpora.json"
+        if not corpora_file.exists():
+            repo_corpora = Path(__file__).resolve().parents[1] / "data" / "language_corpora.json"
+            if repo_corpora.exists():
+                corpora_file = repo_corpora
 
         try:
             from sklearn.feature_extraction.text import TfidfVectorizer
             from sklearn.linear_model import LogisticRegression
             from sklearn.pipeline import make_pipeline
 
-            with open(data_file, "r", encoding="utf-8") as f:
-                cards = json.load(f)
+            if corpora_file.exists():
+                with open(corpora_file, "r", encoding="utf-8") as f:
+                    corpora = json.load(f)
 
-            # 1. Dataset for Devanagari (Marathi vs Hindi)
-            dev_texts: list[str] = []
-            dev_labels: list[str] = []
-            for c in cards:
-                mr_ans = c.get("answer_templates", {}).get("mr")
-                if mr_ans:
-                    dev_texts.append(clean_text(mr_ans))
-                    dev_labels.append("mr")
-                hi_ans = c.get("answer_templates", {}).get("hi")
-                if hi_ans:
-                    dev_texts.append(clean_text(hi_ans))
-                    dev_labels.append("hi")
-                for a in c.get("question_aliases", []):
-                    cl = clean_text(a)
-                    if detect_script(cl) == "devanagari":
-                        card_langs = c.get("languages", [])
-                        if "hi" in card_langs and "mr" not in card_langs:
-                            dev_texts.append(cl)
-                            dev_labels.append("hi")
-                        elif "mr" in card_langs and "hi" not in card_langs:
-                            dev_texts.append(cl)
-                            dev_labels.append("mr")
+                dev_texts = [clean_text(t) for t in corpora.get("devanagari_mr", [])] + [clean_text(t) for t in corpora.get("devanagari_hi", [])]
+                dev_labels = ["mr"] * len(corpora.get("devanagari_mr", [])) + ["hi"] * len(corpora.get("devanagari_hi", []))
+
+                latin_texts = [clean_text(t) for t in corpora.get("latin_en", [])] + [clean_text(t) for t in corpora.get("latin_mr", [])] + [clean_text(t) for t in corpora.get("latin_hi", [])]
+                latin_labels = ["en"] * len(corpora.get("latin_en", [])) + ["mr"] * len(corpora.get("latin_mr", [])) + ["hi"] * len(corpora.get("latin_hi", []))
+            else:
+                return
 
             dev_pipe = make_pipeline(
                 TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), sublinear_tf=True),
-                LogisticRegression(class_weight="balanced", C=10.0, random_state=42),
+                LogisticRegression(class_weight="balanced", C=5.0, random_state=42),
             )
             dev_pipe.fit(dev_texts, dev_labels)
-
-            # 2. Dataset for Latin (English vs Romanized Marathi vs Romanized Hindi)
-            latin_texts: list[str] = []
-            latin_labels: list[str] = []
-
-            for c in cards:
-                en_ans = c.get("answer_templates", {}).get("en")
-                if en_ans:
-                    latin_texts.append(clean_text(en_ans))
-                    latin_labels.append("en")
-                for a in c.get("question_aliases", []):
-                    cl = clean_text(a)
-                    if detect_script(cl) == "latin":
-                        latin_texts.append(cl)
-                        latin_labels.append("en")
-
-            # Conversational English anchors
-            general_en = [
-                "how to cook biryani", "how to cook chicken biryani step by step",
-                "what is the stock price of Apple today", "write python code for quicksort algorithm",
-                "who won the FIFA world cup in 2022", "explain quantum entanglement and superstring theory",
-                "what is the capital of France", "how does a computer work", "can you help me with homework",
-                "why is the sky blue", "how are you today", "tell me a story", "what is machine learning",
-            ]
-            for t in general_en:
-                latin_texts.append(clean_text(t))
-                latin_labels.append("en")
-
-            # Authentic Romanized Marathi student queries
-            roman_mr = [
-                "abhyas kartana focus kasa karaycha", "man ekagr kase karayche", "abhyas kasa karaycha",
-                "shivaji maharaj kon hote", "swarajya mhanje kay", "adhivas mhanje kay", "mala mahiti sanga",
-                "focus kasa thevaycha", "kasa karaycha", "kuthe zala janma", "kon hote shivaji maharaj",
-                "swarajyachi pratidnya koni ghetli", "vanaspati anna kase tayar kartat", "prakashacha veg kiti ahe",
-                "mala he sanga na", "tula mahit ahe ka", "kahi samajat nahiye", "kasa shikaycha",
-                "abhyasat man lagat nahi", "kase karave", "kay karave", "kashala karayche",
-                "shivaji maharajanchi mahiti dya", "maharashtra chi rajdhani konti", "sarvat motha graha konta",
-                "shala kadhi suru honar", "ekagr kase vhave", "dhyan kasa karaycha", "mala uttar dya",
-                "tula marathi yete ka", "he kasa asate", "mala shikayche ahe", "koni keli sthapana",
-            ]
-            for t in roman_mr:
-                latin_texts.append(clean_text(t))
-                latin_labels.append("mr")
-
-            # Authentic Romanized Hindi student queries
-            roman_hi = [
-                "padhai me dhyan kaise lagaye", "padhai kaise kare", "shivaji maharaj kaun the",
-                "aawas kise kehte hain", "kya hai ye", "mujhe bataiye", "kaise karein",
-                "kahan hua tha janma", "kisne li thi pratigya", "paudhe apna bhojan kaise banate hain",
-                "prakash ka veg kitna hai", "mujhe yeh samjhao", "kya aap bata sakte hain",
-                "padhai me man nahi lag raha", "kya karna chahiye", "kaise yaad karein",
-                "bharat ki rajdhani kaun si hai", "sabse bada grah kaun sa hai", "kya haal hai",
-                "mujhe hindi me batao", "ye kaise hota hai", "kisne likha tha rashtrageet",
-            ]
-            for t in roman_hi:
-                latin_texts.append(clean_text(t))
-                latin_labels.append("hi")
 
             latin_pipe = make_pipeline(
                 TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 4), sublinear_tf=True),

@@ -13,7 +13,8 @@ from fastembed import TextEmbedding
 from rapidfuzz import fuzz
 
 from gurukul.models import FactCard, FollowUpChip
-from gurukul.normalizer import clean_text
+from gurukul.normalizer import clean_text, detect_script
+from gurukul.nlu_aspects import classify_query, QueryAspect, QueryModality
 
 
 class BM25Index:
@@ -280,6 +281,7 @@ class FactCardIndex:
             self.vectors = data["vectors"]
             self.indexed_card_ids = list(data["card_ids"])
             self.indexed_texts = list(data["texts"])
+            self._calibrate_dynamic_range()
             return
 
         texts: list[str] = []
@@ -351,6 +353,28 @@ class FactCardIndex:
         except Exception:
             pass
 
+        self._calibrate_dynamic_range()
+
+    def _calibrate_dynamic_range(self) -> None:
+        """Data-driven calibration of cosine similarity dynamic range from indexed vectors."""
+        if hasattr(self, "vectors") and self.vectors is not None and len(self.vectors) > 20:
+            sample_size = min(300, len(self.vectors))
+            rng = np.random.default_rng(42)
+            i1 = rng.integers(0, len(self.vectors), size=sample_size)
+            i2 = rng.integers(0, len(self.vectors), size=sample_size)
+            dots = np.sum(self.vectors[i1] * self.vectors[i2], axis=1)
+            self.cosine_floor = float(np.percentile(dots, 5))
+            self.cosine_ceiling = float(np.percentile(dots, 99))
+        else:
+            self.cosine_floor = 0.58 if "embeddinggemma" in self.model_name.lower() else 0.20
+            self.cosine_ceiling = 0.86 if "embeddinggemma" in self.model_name.lower() else 0.90
+
+    def calibrate_semantic_score(self, sem_score: float) -> float:
+        """Min-max dynamic normalization calibrated to active embedding model geometry."""
+        floor = getattr(self, "cosine_floor", 0.58 if "embeddinggemma" in self.model_name.lower() else 0.20)
+        ceil = getattr(self, "cosine_ceiling", 0.86 if "embeddinggemma" in self.model_name.lower() else 0.90)
+        return min(1.0, max(0.0, (sem_score - floor) / max(1e-6, ceil - floor)))
+
     def get_card(self, card_id: str) -> FactCard | None:
         """Fetch card by ID in O(1) time."""
         return self.cards_by_id.get(card_id)
@@ -360,11 +384,22 @@ class FactCardIndex:
         query: str,
         grade: int | None = None,
         top_k: int = 5,
+        aspect: str | None = None,
+        modality: str | None = None,
     ) -> list[tuple[FactCard, float]]:
-        """Dense neural semantic retrieval with BM25 lexical anchoring and RapidFuzz reranking."""
+        """Dense neural semantic retrieval with BM25 lexical anchoring, aspect/modality reranking, and RapidFuzz scoring."""
         cleaned_query = clean_text(query)
         if not cleaned_query or self.vectors is None or len(self.vectors) == 0 or self.encoder is None:
             return []
+
+        # Analyze query aspect and modality with zero-shot prototype support
+        if aspect is None or modality is None:
+            analysis = classify_query(query, encoder=self.encoder)
+            q_aspect = aspect or analysis.aspect.value
+            q_modality = modality or analysis.modality.value
+        else:
+            q_aspect = aspect
+            q_modality = modality
 
         q_text = (
             f"task: search result | query: {cleaned_query}"
@@ -388,46 +423,68 @@ class FactCardIndex:
         card_scores: dict[str, float] = {}
 
         for idx in top_indices:
-            cid = self.indexed_card_ids[idx]
+            cid = str(self.indexed_card_ids[idx])
             sem_score = float(semantic_scores[idx])
 
-            indexed_str = self.indexed_texts[idx]
+            indexed_str = str(self.indexed_texts[idx])
             fuzz_ratio = fuzz.token_sort_ratio(cleaned_query, indexed_str) / 100.0
 
             bm25_norm = (bm25_scores.get(cid, 0.0) / max_bm25) if max_bm25 > 0 else 0.0
 
-            if "embeddinggemma" in self.model_name.lower():
-                sem_calibrated = min(1.0, max(0.0, (sem_score - 0.60) / 0.25))
-            else:
-                sem_calibrated = sem_score
+            sem_calibrated = self.calibrate_semantic_score(sem_score)
 
-            if (bm25_norm > 0 and sem_score >= 0.75) or fuzz_ratio >= 0.70:
-                composite_score = sem_calibrated * 0.70 + bm25_norm * 0.20 + fuzz_ratio * 0.10
+            if (bm25_norm > 0 and sem_score >= 0.70) or fuzz_ratio >= 0.70:
+                lexical_signal = max(bm25_norm, fuzz_ratio)
+                composite_score = sem_calibrated * 0.75 + lexical_signal * 0.25
                 final_score = max(sem_calibrated, composite_score)
             else:
                 final_score = sem_calibrated
 
-            if not cid.startswith("kb_") and any(k.startswith("kb_") for k in self.cards_by_id):
+            card_obj = self.cards_by_id.get(cid)
+            if card_obj and card_obj.is_curriculum and any(not getattr(k, "is_curriculum", True) for k in self.cards_by_id.values()):
                 final_score += 0.02
+            if card_obj:
+                c_aspect = card_obj.get_aspect()
+                c_modality = card_obj.get_modality()
+
+                # Modality alignment
+                if q_modality != "general":
+                    if c_modality == q_modality:
+                        final_score += 0.05
+                    elif c_modality != "general":
+                        final_score -= 0.05
+
+                # Aspect alignment
+                if q_aspect == "cause":
+                    if c_aspect == "cause":
+                        final_score += 0.05
+                    elif c_aspect == "remedy":
+                        final_score -= 0.05
+                elif q_aspect in ("definition", "schedule", "symptom"):
+                    if c_aspect == q_aspect:
+                        final_score += 0.05
 
             if cid not in card_scores or final_score > card_scores[cid]:
                 card_scores[cid] = final_score
 
         results: list[tuple[FactCard, float]] = []
         for cid, score in card_scores.items():
-            card = self.cards_by_id[cid]
+            card = self.cards_by_id.get(str(cid))
+            if not card:
+                continue
             final_score = score
             if grade is not None and card.grades and grade in card.grades:
-                final_score = min(1.0, final_score + 0.05)
+                final_score += 0.05
             results.append((card, final_score))
 
         results.sort(key=lambda x: x[1], reverse=True)
-        return results[:top_k]
+        return [(c, min(1.0, max(0.0, s))) for c, s in results[:top_k]]
 
     def get_random_follow_up_offer(
         self,
         card_id: str,
         lang: str = "mr",
+        preferred_aspect: str | None = None,
     ) -> tuple[str | None, str | None, str | None]:
         """Selects a related follow-up card ID, generates a natural sounding offer question,
 
@@ -435,26 +492,88 @@ class FactCardIndex:
         """
         import random
         from gurukul.models import format_offer_prompt
+        from gurukul.normalizer import detect_script, infer_preferred_language
 
         card = self.cards_by_id.get(card_id)
         if not card:
             return None, None, None
 
-        candidates = list(card.follow_up_cards)
-        if not candidates:
-            subject_cards = [
+        # 1. First priority: explicit follow_up_cards
+        candidates = [fid for fid in card.follow_up_cards if fid in self.cards_by_id and fid != card_id]
+
+        # 2. Second priority: same category cards
+        if not candidates and card.category:
+            candidates = [
+                c.id for c in self.cards_by_id.values()
+                if c.id != card_id and c.category == card.category
+            ]
+
+        # 3. Third priority: same subject cards
+        if not candidates and card.subject and card.subject != "general":
+            candidates = [
                 c.id for c in self.cards_by_id.values()
                 if c.id != card_id and c.subject == card.subject
             ]
-            candidates = subject_cards or [c.id for c in self.cards_by_id.values() if c.id != card_id]
 
-        if not candidates:
+        # Filter candidates for script and language purity
+        valid_candidates = []
+        for cid in candidates:
+            c = self.cards_by_id[cid]
+            card_langs = c.languages or list(c.answer_templates.keys())
+            if lang not in card_langs:
+                continue
+            q = c.get_offer_question(lang)
+            if lang in ("mr", "hi"):
+                if detect_script(q) != "devanagari":
+                    continue
+                if infer_preferred_language(q, default=lang) != lang:
+                    continue
+            elif lang == "en" and detect_script(q) != "latin":
+                continue
+            valid_candidates.append(cid)
+
+        if not valid_candidates:
+            # Fallback across knowledgebase cards that satisfy script and language purity
+            for c in self.cards_by_id.values():
+                card_langs = c.languages or list(c.answer_templates.keys())
+                if c.id == card_id or lang not in card_langs:
+                    continue
+                q = c.get_offer_question(lang)
+                if lang in ("mr", "hi"):
+                    if detect_script(q) == "devanagari" and infer_preferred_language(q, default=lang) == lang:
+                        valid_candidates.append(c.id)
+                elif lang == "en" and detect_script(q) == "latin":
+                    valid_candidates.append(c.id)
+                if len(valid_candidates) >= 20:
+                    break
+
+        if not valid_candidates:
             return None, None, None
 
-        chosen_id = random.choice(candidates)
-        chosen_card = self.cards_by_id.get(chosen_id)
-        if not chosen_card:
-            return None, None, None
+        if preferred_aspect:
+            aspect_matches = [
+                cid for cid in valid_candidates
+                if self.cards_by_id[cid].get_aspect() == preferred_aspect
+            ]
+            if not aspect_matches:
+                # Also check across knowledgebase for preferred aspect cards
+                for c in self.cards_by_id.values():
+                    card_langs = c.languages or list(c.answer_templates.keys())
+                    if c.id != card_id and c.get_aspect() == preferred_aspect and lang in card_langs:
+                        q = c.get_offer_question(lang)
+                        if lang in ("mr", "hi"):
+                            if detect_script(q) == "devanagari" and infer_preferred_language(q, default=lang) == lang:
+                                aspect_matches.append(c.id)
+                        elif lang == "en" and detect_script(q) == "latin":
+                            aspect_matches.append(c.id)
+            if aspect_matches:
+                chosen_id = random.choice(aspect_matches)
+            else:
+                chosen_id = random.choice(valid_candidates)
+        else:
+            chosen_id = random.choice(valid_candidates)
+
+        chosen_card = self.cards_by_id[chosen_id]
 
         offer_q = chosen_card.get_offer_question(lang)
         offer_prompt = format_offer_prompt(offer_q, lang=lang)
@@ -470,18 +589,35 @@ class FactCardIndex:
     ) -> list[FollowUpChip]:
         """Resolves follow-up card IDs into clean, clickable FollowUpChip navigation objects."""
         import random
+        from gurukul.normalizer import detect_script
 
         card = self.cards_by_id.get(card_id)
-        if not card or not card.follow_up_cards:
+        if not card:
             return []
 
-        fu_ids = list(card.follow_up_cards)
+        fu_ids = [fid for fid in card.follow_up_cards if fid in self.cards_by_id]
+        if not fu_ids and card.category:
+            fu_ids = [c.id for c in self.cards_by_id.values() if c.id != card_id and c.category == card.category]
+
+        # Filter out chips that fail script check
+        valid_fu_ids = []
+        for fid in fu_ids:
+            fc = self.cards_by_id.get(fid)
+            if not fc:
+                continue
+            title = fc.get_title(lang)
+            if lang in ("mr", "hi") and detect_script(title) != "devanagari":
+                continue
+            if lang == "en" and detect_script(title) != "latin":
+                continue
+            valid_fu_ids.append(fid)
+
         if randomize:
-            other_ids = [fid for fid in fu_ids if fid != featured_id]
+            other_ids = [fid for fid in valid_fu_ids if fid != featured_id]
             random.shuffle(other_ids)
-            selected_ids = ([featured_id] if featured_id and featured_id in fu_ids else []) + other_ids
+            selected_ids = ([featured_id] if featured_id and featured_id in valid_fu_ids else []) + other_ids
         else:
-            selected_ids = fu_ids
+            selected_ids = valid_fu_ids
 
         chips: list[FollowUpChip] = []
         for fu_id in selected_ids[:max_chips]:
@@ -499,36 +635,55 @@ class FactCardIndex:
 
     def get_suggested_topics(self, lang: str = "mr", count: int = 4) -> list[str]:
         """Return a curated set of topics for exploration in the requested language."""
-        # If custom cards have topic titles, offer those
-        custom_topics = [c.topic for c in self.cards_by_id.values() if c.topic and not c.id.startswith("kb_")]
+        # If custom non-curriculum cards have topic titles, offer those
+        custom_topics = [c.topic for c in self.cards_by_id.values() if c.topic and not c.is_curriculum]
         if len(custom_topics) >= count:
             return list(dict.fromkeys(custom_topics))[:count]
 
-        suggestions_by_lang: dict[str, list[str]] = {
-            "mr": [
-                "छत्रपती शिवाजी महाराज",
-                "सजीव आणि अधिवास",
-                "प्रकाशाचा व ध्वनीचा वेग",
-                "भारतीय संविधान आणि राष्ट्रगीत",
-                "सौरमाला आणि ग्रह",
-            ],
-            "hi": [
-                "छत्रपति शिवाजी महाराज",
-                "जीव और उनका आवास",
-                "प्रकाश और ध्वनि का वेग",
-                "भारतीय संविधान और राष्ट्रगान",
-                "सौरमंडल और ग्रह",
-            ],
-            "en": [
-                "Chhatrapati Shivaji Maharaj",
-                "Living Organisms & Habitat",
-                "Speed of Light and Sound",
-                "Indian Constitution & National Anthem",
-                "Solar System & Planets",
-            ],
-        }
-        suggestions = suggestions_by_lang.get(lang, suggestions_by_lang["mr"])
-        return suggestions[:count]
+        topics_file = Path(__file__).resolve().parent / "data" / "suggested_topics.json"
+        if topics_file.exists():
+            try:
+                with open(topics_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                curated = data.get(lang) or data.get("mr", [])
+                if curated:
+                    return curated[:count]
+            except Exception:
+                pass
+
+        # Dynamic fallback: extract from indexed cards
+        from gurukul.normalizer import detect_script, infer_preferred_language
+
+        target_script = "devanagari" if lang in ("mr", "hi") else "latin"
+        extracted: list[str] = []
+
+        for card in self.cards_by_id.values():
+            cand: str | None = None
+            for e in card.entities:
+                if detect_script(e) == target_script:
+                    cand = e
+                    break
+            if not cand:
+                for a in card.question_aliases:
+                    clean = a.strip("?|।॥ ").strip()
+                    if detect_script(clean) == target_script and infer_preferred_language(clean, default=lang) == lang and len(clean.split()) <= 4:
+                        cand = clean
+                        break
+            if not cand:
+                for a in card.question_aliases:
+                    clean = a.strip("?|।॥ ").strip()
+                    if detect_script(clean) == target_script and len(clean.split()) <= 4:
+                        cand = clean
+                        break
+            if not cand and card.topic:
+                cand = card.topic.replace("_", " ").title()
+
+            if cand and cand not in extracted:
+                extracted.append(cand)
+                if len(extracted) >= count:
+                    break
+
+        return extracted[:count]
 
     def get_curriculum_tree(self) -> dict[str, Any]:
         """Builds a hierarchical view of the knowledgebase: Grade -> Subject -> Topics."""

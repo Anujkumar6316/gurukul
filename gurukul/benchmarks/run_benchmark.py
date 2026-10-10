@@ -193,9 +193,16 @@ def build_test_cases(records: list[dict[str, Any]]) -> list[Any]:
         query = rec.get("query", "").strip()
         ans = rec.get("answer", "") or rec.get("answer_preview", "")
         follow_up = rec.get("follow_up_offer", "") or ""
+        lang = rec.get("language", "mr")
 
         if follow_up:
-            actual_output = f"{ans}\n\n[Follow-up Offer]: {follow_up}".strip()
+            if lang == "mr":
+                offer_tag = "[पुढील विषय विचारणा]"
+            elif lang == "hi":
+                offer_tag = "[आगे का सुझाव]"
+            else:
+                offer_tag = "[Follow-up Offer]"
+            actual_output = f"{ans}\n\n{offer_tag}: {follow_up}".strip()
         else:
             actual_output = ans.strip()
 
@@ -206,13 +213,13 @@ def build_test_cases(records: list[dict[str, Any]]) -> list[Any]:
 
         if is_abstention or not card_id:
             context = [
-                "Balbharati Syllabus Context: No direct curriculum match. System expected to abstain politely."
+                "Educational Knowledge Base Context: No direct curriculum match. System expected to abstain politely."
             ]
         else:
             topic_str = f"Topic: {topic}" if topic else "Curriculum Card"
             cite_str = f" (Citation: {citation})" if citation else ""
             context = [
-                f"Balbharati Textbook Card [{card_id}] - {topic_str}{cite_str}:\n{ans}"
+                f"Educational Knowledge Base Card [{card_id}] - {topic_str}{cite_str}:\n{ans}"
             ]
 
         tc = LLMTestCase(
@@ -730,13 +737,16 @@ def run(
         f"({'parallel, max_concurrent=' + str(active_workers) if active_workers > 1 else 'sequential'})..."
     )
     eval_started = time.perf_counter()
+    base_url = settings.openai_base_url or settings.ollama_base_url or ""
+    is_local_ollama = "localhost" in base_url or "11434" in base_url
+    judge_concurrency = min(2, active_workers) if is_local_ollama else active_workers
     eval_results = evaluate(
         test_cases=test_cases,
         metrics=metrics,
         async_config=AsyncConfig(
-            run_async=active_workers > 1,
-            throttle_value=0,
-            max_concurrent=active_workers,
+            run_async=judge_concurrency > 1,
+            throttle_value=1 if is_local_ollama else 0,
+            max_concurrent=judge_concurrency,
         ),
         error_config=ErrorConfig(ignore_errors=True),
     )
