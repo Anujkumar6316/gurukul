@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gurukul"
+version = "0.2.0"
+description = "Zero-LLM Multilingual Offline FactBot & Benchmarking Engine"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastembed>=0.4.0",
+    "onnxruntime>=1.18.0",
+    "tokenizers>=0.19.0",
+    "huggingface-hub>=0.23.0",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.5.0",
+    "pydantic>=2.9.0",
+    "rapidfuzz>=3.9.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "gradio>=4.0.0",
+    "poethepoet>=0.30.0",
+    "deepeval>=4.2.8",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+]
+ui = [
+    "gradio>=4.0.0",
+]
+benchmark = [
+    "deepeval>=4.2.8",
+]
+all = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "gradio>=4.0.0",
+    "deepeval>=4.2.8",
+]
+
+[project.scripts]
+gurukul = "gurukul.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gurukul*", "app*", "benchmarks*"]
+
+[tool.setuptools.package-data]
+gurukul = ["data/*", "data/.cache/*"]
+
+[tool.poe.tasks]
+api = { cmd = "python main.py --service api --host 0.0.0.0 --port 8000", help = "Start FastAPI REST API service" }
+studio = { cmd = "python main.py --service studio --host 0.0.0.0 --port 7860", help = "Start Gradio Studio UI" }
+api-share = { cmd = "python main.py --service api-share --port 8000", help = "Start unified API & Studio and share via Cloudflare Tunnel" }
+cli = { cmd = "gurukul chat", help = "Start interactive terminal CLI" }
+test = { cmd = "python -m unittest discover -s tests -v", help = "Run all unit tests" }
+benchmark = { cmd = "gurukul benchmark", help = "Run DeepEval LLM-as-a-judge benchmark" }

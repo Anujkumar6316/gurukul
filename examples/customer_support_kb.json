@@ -1,0 +1,87 @@
+[
+  {
+    "id": "return_policy",
+    "topic": "Return Policy",
+    "question_aliases": [
+      "What is your return policy?",
+      "How do I return an item?",
+      "Can I return my purchase?",
+      "सामान वापस कैसे करें?",
+      "वस्तू परत कशी करायची?"
+    ],
+    "answers": {
+      "en": "You can return any unused item within 30 days of purchase for a full refund. Items must be in original packaging with tags intact.",
+      "hi": "आप खरीदारी के 30 दिनों के भीतर किसी भी अप्रयुक्त वस्तु को पूर्ण रिफंड के लिए वापस कर सकते हैं। वस्तु मूल पैकेजिंग में होनी चाहिए।",
+      "mr": "तुम्ही खरेदी केल्यापासून ३० दिवसांच्या आत कोणतीही न वापरलेली वस्तू संपूर्ण परताव्यासाठी परत करू शकता. वस्तू मूळ पॅकेजिंगमध्ये असावी."
+    },
+    "follow_up_cards": ["refund_timeline", "shipping_methods"]
+  },
+  {
+    "id": "refund_timeline",
+    "topic": "Refund Timeline",
+    "question_aliases": [
+      "When will I get my refund?",
+      "How long does a refund take?",
+      "Where is my money?",
+      "रिफंड कब मिलेगा?",
+      "माझे पैसे कधी परत मिळतील?"
+    ],
+    "answers": {
+      "en": "Refunds are processed within 5 to 7 business days once we receive the returned item at our fulfillment center.",
+      "hi": "हमारे पूर्ति केंद्र पर लौटाई गई वस्तु प्राप्त होने के 5 से 7 कार्य दिवसों के भीतर रिफंड प्रोसेस कर दिया जाता है।",
+      "mr": "परत केलेली वस्तू आमच्या केंद्रावर प्राप्त झाल्यानंतर ५ ते ७ कामकाजाच्या दिवसांत परतावा प्रक्रिया पूर्ण केली जाते."
+    },
+    "follow_up_cards": ["return_policy", "payment_modes"]
+  },
+  {
+    "id": "shipping_methods",
+    "topic": "Shipping Methods",
+    "question_aliases": [
+      "What shipping options are available?",
+      "How fast is delivery?",
+      "Do you offer express shipping?",
+      "डिलीवरी कितने समय में होती है?",
+      "डिलिव्हरी किती दिवसांत मिळेल?"
+    ],
+    "answers": {
+      "en": "We offer Standard Shipping (3-5 business days) and Express Next-Day Delivery. Standard shipping is free on orders above ₹499.",
+      "hi": "हम मानक शिपिंग (3-5 कार्य दिवस) और एक्सप्रेस अगले दिन डिलीवरी प्रदान करते हैं। ₹499 से अधिक के ऑर्डर पर मानक शिपिंग निःशुल्क है।",
+      "mr": "आम्ही स्टँडर्ड शिपिंग (३-५ कामकाजाचे दिवस) आणि एक्सप्रेस डिलिव्हरी देतो. ₹४९९ वरील ऑर्डर्सवर स्टँडर्ड शिपिंग मोफत आहे."
+    },
+    "follow_up_cards": ["return_policy", "refund_timeline"]
+  },
+  {
+    "id": "password_reset",
+    "topic": "Password Reset",
+    "question_aliases": [
+      "How do I reset my password?",
+      "I forgot my password",
+      "Cannot log in to my account",
+      "पासवर्ड कैसे बदलें?",
+      "पासवर्ड कसा रिसेट करायचा?"
+    ],
+    "answers": {
+      "en": "Click on 'Forgot Password' on the login screen and enter your registered email address. We will send you a secure reset link valid for 15 minutes.",
+      "hi": "लॉगिन स्क्रीन पर 'पासवर्ड भूल गए' पर क्लिक करें और अपना पंजीकृत ईमेल पता दर्ज करें। हम आपको 15 मिनट के लिए वैध सुरक्षित रीसेट लिंक भेजेंगे।",
+      "mr": "लॉगिन स्क्रीनवर 'पासवर्ड विसरलात' वर क्लिक करा आणि तुमचा नोंदणीकृत ईमेल पत्ता टाका. आम्ही १५ मिनिटांसाठी वैध लिंक पाठवू."
+    },
+    "follow_up_cards": ["payment_modes"]
+  },
+  {
+    "id": "payment_modes",
+    "topic": "Accepted Payment Methods",
+    "question_aliases": [
+      "What payment methods do you accept?",
+      "Can I pay via UPI or cash on delivery?",
+      "How can I pay?",
+      "भुगतान के कौन से तरीके उपलब्ध हैं?",
+      "पैसे देण्याचे कोणते पर्याय उपलब्ध आहेत?"
+    ],
+    "answers": {
+      "en": "We accept UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards (Visa, Mastercard, RuPay), Net Banking, and Cash on Delivery (COD).",
+      "hi": "हम यूपीआई (Google Pay, PhonePe, Paytm), क्रेडिट/डेबिट कार्ड, नेट बैंकिंग और कैश ऑन डिलीवरी (COD) स्वीकार करते हैं।",
+      "mr": "आम्ही युपीआय (Google Pay, PhonePe, Paytm), क्रेडिट/डेबिट कार्ड्स, नेट बँकिंग आणि कॅश ऑन डिलिव्हरी (COD) स्वीकारतो."
+    },
+    "follow_up_cards": ["refund_timeline", "return_policy"]
+  }
+]
